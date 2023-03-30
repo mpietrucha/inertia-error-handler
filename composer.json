@@ -1,0 +1,28 @@
+{
+    "name": "mpietrucha/inertia-error-handler",
+    "description": "Error handler for inertia. Design for Laravel projects",
+    "type": "liblary",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Mpietrucha\\Error\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "authors": [
+        {
+            "name": "Michał Pietrucha",
+            "email": "michal.pietrucha@off-site.pl"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^8.1",
+        "mpietrucha/support": "^1.0"
+    },
+    "require-dev": {
+        "symfony/var-dumper": "^6.2"
+    }
+}

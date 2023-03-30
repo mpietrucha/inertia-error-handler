@@ -5,7 +5,7 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Mpietrucha\\Error\\": "src/"
+            "Mpietrucha\\Inertia\\Error\\": "src/"
         },
         "files": [
             "src/helpers.php"

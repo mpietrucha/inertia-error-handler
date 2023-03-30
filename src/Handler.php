@@ -46,7 +46,7 @@ class Handler
 
     public function transformRequest(array $transform): self
     {
-        $this->beforeResolve(function () use ($transform) {
+        return $this->beforeResolve(function () use ($transform) {
             $this->request = $this->request->duplicate(...$transform);
         });
     }

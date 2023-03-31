@@ -2,6 +2,7 @@
 
 namespace Mpietrucha\Inertia\Error;
 
+use Closure;
 use Throwable;
 use Mpietrucha\Support\Concerns\HasFactory;
 use Symfony\Component\HttpFoundation\Request;

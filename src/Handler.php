@@ -3,11 +3,14 @@
 namespace Mpietrucha\Inertia\Error;
 
 use Throwable;
+use Mpietrucha\Support\Concerns\HasFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class Handler
 {
+    use HasFactory;
+
     protected Request $request;
 
     protected ?Response $response = null;

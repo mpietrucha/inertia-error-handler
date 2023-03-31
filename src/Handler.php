@@ -2,68 +2,77 @@
 
 namespace Mpietrucha\Inertia\Error;
 
-use Closure;
 use Throwable;
-use Mpietrucha\Support\Concerns\HasFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class Handler
 {
-    use HasFactory;
+    protected Request $request;
 
-    protected Response $response;
+    protected ?Response $response = null;
 
-    protected array $beforeResolve = [];
+    protected bool $enabled;
 
-    public function __construct(protected Request $request, protected Throwable $exception)
+    protected bool $redirects = false;
+
+    public function __construct(protected Throwable $exception)
     {
-        $this->response();
+        $this->enabled(! config('app.debug'));
     }
 
-    public function response(Response $response = new Response): self
+    public function response(Response $response): self
     {
         $this->response = $response;
 
         return $this;
     }
 
-    public function overrideException(string $from, $to, bool $debug = true): self
+    public function request(Request $request): self
     {
-        return $this->beforeResolve(function () use ($from, $to, $debug) {
-            throw_if($this->exception instanceof $from && config('app.debug') !== $debug, $to);
-        });
+        $this->request = $request;
+
+        return $this;
     }
 
-    public function dontProcessRedirect(): self
+    public function redirects(bool $mode = true): self
     {
-        return $this->beforeResolve(function () {
-            if ($this->response->status() >= 300 && $this->response->status() < 400) {
-                return $this->response;
-            }
-        });
+        $this->redirects = $mode;
+
+        return $this;
     }
 
-    public function transformRequest(array $transform): self
+    public function function enabled(bool $mode = true): self
     {
-        return $this->beforeResolve(function () use ($transform) {
-            $this->request = $this->request->duplicate(...$transform);
-        });
+        $this->enabled = $mode;
+
+        return $this;
     }
 
-    public function beforeResolve(Closure $before): self
+    public function whenExceptionIs(string $exception, Closure $callback): self
     {
-        $this->beforeResolve[] = $before;
+        if ($this->exception instanceof $exception) {
+            value($callback);
+        }
 
         return $this;
     }
 
     public function render(string $component, array $props): Response
     {
-        return collect($this->beforeResolve)->map(fn (Closure $before) => value($before))
-            ->whereInstanceOf(Response::class)
-            ->last(default: function () use ($component, $props) {
-                return inertia()->render($component, $props)->toResponse($this->request)->setStatusCode($this->response->status());
-            });
+        if (! $this->enabled) {
+            return $this->response;
+        }
+
+        if ($this->redirects && $this->isRedirectResponse()) {
+            return $this->response;
+        }
+
+        return inertia()->render($component, $props)->toResponse($this->request)->setStatusCode($this->response->status());
+    }
+
+    protected function isRedirectResponse(): bool
+    {
+        return $this->response->status() >= 300 && $this->response->status() < 400;
     }
 }

@@ -42,7 +42,7 @@ class Handler
         return $this;
     }
 
-    public function function enabled(bool $mode = true): self
+    public function enabled(bool $mode = true): self
     {
         $this->enabled = $mode;
 

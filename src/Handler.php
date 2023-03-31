@@ -2,8 +2,8 @@
 
 namespace Mpietrucha\Inertia\Error;
 
-use Closure;
 use Throwable;
+use Mpietrucha\Support\Condition;
 use Mpietrucha\Support\Concerns\HasFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -11,6 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 class Handler
 {
     use HasFactory;
+
+    protected ?Throwable $oldException = null;
 
     protected Request $request;
 
@@ -53,18 +55,20 @@ class Handler
         return $this;
     }
 
-    public function whenExceptionIs(string $exception, Closure $callback): self
+    public function replaceException(string $from, string $to): self
     {
-        if ($this->exception instanceof $exception) {
-            value($callback);
-        }
+        $this->exception = Condition::create($this->exception)
+            ->add(fn () => new $to, $this->exception instanceof $from)
+            ->resolve();
+
+        $this->hasReplacedException = $this->exception instanceof $to;
 
         return $this;
     }
 
     public function render(string $component, array $props): Response
     {
-        if (! $this->enabled) {
+        if (! $this->enabled && ! $this->hasReplacedException) {
             return $this->response;
         }
 

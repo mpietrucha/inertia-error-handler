@@ -2,6 +2,7 @@
 
 namespace Mpietrucha\Inertia\Error;
 
+use Closure;
 use Throwable;
 use Mpietrucha\Nginx\Error\Interceptor;
 use Mpietrucha\Support\Condition;
@@ -13,13 +14,13 @@ class Handler
 {
     use HasFactory;
 
-    protected ?Throwable $oldException = null;
-
     protected Request $request;
 
     protected ?Response $response = null;
 
-    protected bool $enabled;
+    protected bool $enabled = true;
+
+    protected bool $hasReplacedException = false;
 
     protected bool $redirects = false;
 
@@ -49,9 +50,9 @@ class Handler
         return $this;
     }
 
-    public function enabled(bool $mode = true): self
+    public function enabled(bool|Closure $mode = true): self
     {
-        $this->enabled = $mode;
+        $this->enabled = value($mode, $this->enabled);
 
         return $this;
     }
@@ -69,10 +70,6 @@ class Handler
 
     public function render(string $component, array $props): Response
     {
-        if (class_exists(Interceptor::class)) {
-            Interceptor::enable();
-        }
-
         if (! $this->enabled && ! $this->hasReplacedException) {
             return $this->response;
         }
@@ -81,7 +78,13 @@ class Handler
             return $this->response;
         }
 
-        return inertia()->render($component, $props)->toResponse($this->request)->setStatusCode($this->response->status());
+        $response = inertia()->render($component, $props)->toResponse($this->request)->setStatusCode($this->response->status());
+
+        if (class_exists(Interceptor::class)) {
+            Interceptor::enable($response);
+        }
+
+        return $response;
     }
 
     protected function isRedirectResponse(): bool

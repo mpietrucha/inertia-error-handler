@@ -3,6 +3,7 @@
 namespace Mpietrucha\Inertia\Error;
 
 use Throwable;
+use Mpietrucha\Nginx\Error\Interceptor;
 use Mpietrucha\Support\Condition;
 use Mpietrucha\Support\Concerns\HasFactory;
 use Symfony\Component\HttpFoundation\Request;
@@ -68,6 +69,10 @@ class Handler
 
     public function render(string $component, array $props): Response
     {
+        if (class_exists(Interceptor::class)) {
+            Interceptor::enable();
+        }
+
         if (! $this->enabled && ! $this->hasReplacedException) {
             return $this->response;
         }

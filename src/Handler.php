@@ -10,6 +10,7 @@ use Mpietrucha\Support\Condition;
 use Mpietrucha\Support\Concerns\HasFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Handler
 {
@@ -19,7 +20,13 @@ class Handler
 
     public function __construct(protected Throwable $exception, protected ?Request $request = null, protected ?Response $response = null)
     {
-        $this->enabled(! config('app.debug'));
+        $this->enabled(function () {
+            if ($this->exception instanceof HttpException) {
+                return true;
+            }
+
+            return ! config('app.debug');
+        });
     }
 
     public function enabled(bool|Closure $mode = true): self
@@ -27,11 +34,6 @@ class Handler
         $this->enabled = value($mode, $this->enabled);
 
         return $this;
-    }
-
-    public function authenticated(): self
-    {
-        return $this->enabled(fn (bool $enabled) => $enabled && auth()->check());
     }
 
     public function request(Request $request): self
@@ -48,32 +50,30 @@ class Handler
         return $this;
     }
 
-    public function swap(string $from, string $to): self
-    {
-        // if ($this->exception instanceof $from) {
-        //     throw new $to;
-        // }
-
-        return $this;
-    }
-
     public function render(string $component, array $props): Response
     {
         if (! $this->request || ! $this->response) {
             throw new Exception('Cannot process error without request/response.');
         }
 
-        $this->enableNginxInterceptorIfPossible($this->response);
+        $this->enableNginxInterceptorIfPossible(
+            $response = $this->resolve($component, $props)
+        );
+
+        return $response;
+    }
+
+    protected function resolve(string $component, array $props): Response
+    {
+        if ($this->response->status() < 400) {
+            return $this->response;
+        }
 
         if (! $this->enabled) {
             return $this->response;
         }
 
-        $this->enableNginxInterceptorIfPossible(
-            $response = inertia()->render($component, $props)->toResponse($this->request)->setStatusCode($this->response->status())
-        );
-
-        return $response;
+        return inertia()->render($component, $props)->toResponse($this->request)->setStatusCode($this->response->status());
     }
 
     protected function enableNginxInterceptorIfPossible(Response $response): void

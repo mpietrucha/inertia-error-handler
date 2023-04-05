@@ -70,7 +70,7 @@ class Handler
         }
 
         $this->enableNginxInterceptorIfPossible(
-            $response = inertia()->render($component, $props)->toResponse($this->request)->setStatusCode($this->response->status());
+            $response = inertia()->render($component, $props)->toResponse($this->request)->setStatusCode($this->response->status())
         );
 
         return $response;

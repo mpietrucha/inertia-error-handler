@@ -78,8 +78,6 @@ class Handler
 
     protected function enableNginxInterceptorIfPossible(Response $response): void
     {
-        return;
-
         if (! class_exists(Interceptor::class)) {
             return;
         }

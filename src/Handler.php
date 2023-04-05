@@ -82,6 +82,6 @@ class Handler
             return;
         }
 
-        Interceptor::create($response);
+        Interceptor::create($request, $response);
     }
 }

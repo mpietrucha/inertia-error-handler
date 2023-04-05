@@ -63,20 +63,17 @@ class Handler
             throw new Exception('Cannot process error without request/response.');
         }
 
-        $this->enableNginxInterceptorIfPossible(
-            $response = $this->respond()
-        );
+        $this->enableNginxInterceptorIfPossible($this->response);
 
-        return $response;
-    }
-
-    protected function respond(): Response
-    {
         if (! $this->enabled) {
             return $this->response;
         }
 
-        return inertia()->render($component, $props)->toResponse($this->request)->setStatusCode($this->response->status());
+        $this->enableNginxInterceptorIfPossible(
+            $response = inertia()->render($component, $props)->toResponse($this->request)->setStatusCode($this->response->status());
+        );
+
+        return $response;
     }
 
     protected function enableNginxInterceptorIfPossible(Response $response): void

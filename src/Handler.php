@@ -17,10 +17,6 @@ class Handler
 
     protected bool $enabled = true;
 
-    protected bool $redirects = false;
-
-    protected bool $hasReplacedException = false;
-
     public function __construct(protected Throwable $exception, protected ?Request $request = null, protected ?Response $response = null)
     {
         $this->enabled(! config('app.debug'));
@@ -31,6 +27,11 @@ class Handler
         $this->enabled = value($mode, $this->enabled);
 
         return $this;
+    }
+
+    public function authenticated(): self
+    {
+        return $this->enabled(fn (bool $enabled) => $enabled && auth()->check());
     }
 
     public function request(Request $request): self
@@ -47,20 +48,11 @@ class Handler
         return $this;
     }
 
-    public function redirects(bool $mode = true): self
+    public function swap(string $from, string $to): self
     {
-        $this->redirects = $mode;
-
-        return $this;
-    }
-
-    public function replaceException(string $from, string $to): self
-    {
-        $this->exception = Condition::create($this->exception)
-            ->add(fn () => new $to, $this->exception instanceof $from)
-            ->resolve();
-
-        $this->hasReplacedException = $this->exception instanceof $to;
+        if ($this->exception instanceof $from) {
+            throw new $to;
+        }
 
         return $this;
     }
@@ -71,25 +63,28 @@ class Handler
             throw new Exception('Cannot process error without request/response.');
         }
 
-        if (! $this->enabled && ! $this->hasReplacedException) {
-            return $this->response;
-        }
-
-        if ($this->redirects && $this->isRedirectResponse()) {
-            return $this->response;
-        }
-
-        $response = inertia()->render($component, $props)->toResponse($this->request)->setStatusCode($this->response->status());
-
-        if (class_exists(Interceptor::class)) {
-            Interceptor::enable($response);
-        }
+        $this->enableNginxInterceptorIfPossible(
+            $response = $this->response()
+        );
 
         return $response;
     }
 
-    protected function isRedirectResponse(): bool
+    protected function response(): Response
     {
-        return $this->response->status() >= 300 && $this->response->status() < 400;
+        if (! $this->enabled) {
+            return $this->response;
+        }
+
+        return inertia()->render($component, $props)->toResponse($this->request)->setStatusCode($this->response->status());
+    }
+
+    protected function enableNginxInterceptorIfPossible(Response $response): void
+    {
+        if (! class_exists(Interceptor::class)) {
+            return;
+        }
+
+        Interceptor::enable($response);
     }
 }

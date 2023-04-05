@@ -4,6 +4,7 @@ namespace Mpietrucha\Inertia\Error;
 
 use Closure;
 use Throwable;
+use Exception;
 use Mpietrucha\Nginx\Error\Interceptor;
 use Mpietrucha\Support\Condition;
 use Mpietrucha\Support\Concerns\HasFactory;
@@ -14,24 +15,20 @@ class Handler
 {
     use HasFactory;
 
-    protected Request $request;
-
-    protected ?Response $response = null;
-
     protected bool $enabled = true;
-
-    protected bool $hasReplacedException = false;
 
     protected bool $redirects = false;
 
-    public function __construct(protected Throwable $exception)
+    protected bool $hasReplacedException = false;
+
+    public function __construct(protected Throwable $exception, protected ?Request $request = null, protected Response $response = null)
     {
         $this->enabled(! config('app.debug'));
     }
 
-    public function response(Response $response): self
+    public function enabled(bool|Closure $mode = true): self
     {
-        $this->response = $response;
+        $this->enabled = value($mode, $this->enabled);
 
         return $this;
     }
@@ -43,16 +40,16 @@ class Handler
         return $this;
     }
 
-    public function redirects(bool $mode = true): self
+    public function response(Response $response): self
     {
-        $this->redirects = $mode;
+        $this->response = $response;
 
         return $this;
     }
 
-    public function enabled(bool|Closure $mode = true): self
+    public function redirects(bool $mode = true): self
     {
-        $this->enabled = value($mode, $this->enabled);
+        $this->redirects = $mode;
 
         return $this;
     }
@@ -70,6 +67,10 @@ class Handler
 
     public function render(string $component, array $props): Response
     {
+        if (! $this->request || ! $this->response) {
+            throw new Exception('Cannot process error without request/response.');
+        }
+
         if (! $this->enabled && ! $this->hasReplacedException) {
             return $this->response;
         }

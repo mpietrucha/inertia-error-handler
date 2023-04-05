@@ -85,6 +85,6 @@ class Handler
             return;
         }
 
-        Interceptor::enable($response);
+        Interceptor::create($response);
     }
 }

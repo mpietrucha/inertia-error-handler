@@ -50,9 +50,9 @@ class Handler
 
     public function swap(string $from, string $to): self
     {
-        if ($this->exception instanceof $from) {
-            throw new $to;
-        }
+        // if ($this->exception instanceof $from) {
+        //     throw new $to;
+        // }
 
         return $this;
     }

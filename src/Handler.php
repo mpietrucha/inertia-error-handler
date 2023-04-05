@@ -64,13 +64,13 @@ class Handler
         }
 
         $this->enableNginxInterceptorIfPossible(
-            $response = $this->response()
+            $response = $this->respond()
         );
 
         return $response;
     }
 
-    protected function response(): Response
+    protected function respond(): Response
     {
         if (! $this->enabled) {
             return $this->response;

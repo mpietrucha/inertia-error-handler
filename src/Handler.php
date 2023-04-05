@@ -21,7 +21,7 @@ class Handler
 
     protected bool $hasReplacedException = false;
 
-    public function __construct(protected Throwable $exception, protected ?Request $request = null, protected Response $response = null)
+    public function __construct(protected Throwable $exception, protected ?Request $request = null, protected ?Response $response = null)
     {
         $this->enabled(! config('app.debug'));
     }

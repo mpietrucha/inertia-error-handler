@@ -7,6 +7,7 @@ use Throwable;
 use Exception;
 use Mpietrucha\Nginx\Error\Interceptor;
 use Mpietrucha\Support\Condition;
+use Mpietrucha\Support\Package;
 use Mpietrucha\Support\Concerns\HasFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -78,7 +79,7 @@ class Handler
 
     protected function enableNginxInterceptorIfPossible(Response $response): void
     {
-        if (! class_exists(Interceptor::class)) {
+        if (! Package::exists(Interceptor::class)) {
             return;
         }
 

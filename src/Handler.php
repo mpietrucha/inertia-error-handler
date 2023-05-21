@@ -4,7 +4,7 @@ namespace Mpietrucha\Inertia\Error;
 
 use Closure;
 use Throwable;
-use Exception;
+use Mpietrucha\Exception\InvalidArgumentException;
 use Mpietrucha\Nginx\Error\Interceptor;
 use Mpietrucha\Support\Condition;
 use Mpietrucha\Support\Package;
@@ -54,7 +54,7 @@ class Handler
     public function render(string $component, array $props): Response
     {
         if (! $this->request || ! $this->response) {
-            throw new Exception('Cannot process error without request/response.');
+            throw new InvalidArgumentException('Cannot process error without request/reponse given');
         }
 
         $this->enableNginxInterceptorIfPossible(

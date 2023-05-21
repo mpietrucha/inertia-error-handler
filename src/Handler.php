@@ -53,9 +53,7 @@ class Handler
 
     public function render(string $component, array $props): Response
     {
-        if (! $this->request || ! $this->response) {
-            throw new InvalidArgumentException('Cannot process error without request/reponse given');
-        }
+        throw_if(! $this->request || ! $this->response, new InvalidArgumentException('Cannot process error without request/reponse given'));
 
         $this->enableNginxInterceptorIfPossible(
             $response = $this->resolve($component, $props)
